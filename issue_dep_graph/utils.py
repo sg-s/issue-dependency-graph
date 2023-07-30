@@ -10,7 +10,7 @@ def sync_issues_to_graph(*, repo: str):
 
 @beartype
 def get_open_issue_titles(*, repo: str) -> List[str]:
-    r = g.get_repo("inscopix/toolbox-creator")
+    r = g.get_repo(repo)
     open_issues = r.get_issues(state="open")
     open_issue_titles = []
     for issue in open_issues:
