@@ -1,7 +1,7 @@
 poetry.lock
 *.DS_Store
 
-
+token
 
 *.sqlite
 github_token
