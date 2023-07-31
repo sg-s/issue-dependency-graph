@@ -15,6 +15,8 @@ try:
 except Exception:
     pass
 
+classes = ["classDef done fill:#8250df,color:#fff"]
+
 
 def set_milestone(
     *,
@@ -84,11 +86,21 @@ def sync_graph_to_issues(
     # figure out what issues are referenced in the graph
     mermaid_code = get_mermaid_graph_from_repo(repo=repo, token=token)
 
+    # make sure the mermaid code has the req classes
+    insert_classes = []
+    for css_class in classes:
+        if css_class in mermaid_code:
+            continue
+        insert_classes.append(css_class)
+
+    mermaid_code = mermaid_code[:2] + insert_classes + mermaid_code[2:]
+
     # get issues from mermaid text
     issues = extract_issues_from_mermaid_code(mermaid_code)
 
     # insert links for issues that don't have links
     new_links = []
+
     for issue in issues:
         if "link" in issue.keys() and issue["link"] is not None:
             continue
@@ -109,6 +121,29 @@ def sync_graph_to_issues(
 
     # insert new links into mermaid diagram
     mermaid_code = mermaid_code[0:-1] + new_links + [mermaid_code[-1]]
+
+    # mark closed issues as done
+    closed_issues = r.get_issues(state="closed")
+    valid_issue_keys = []
+    for issue in issues:
+        key = issue["key"]
+        name = issue["name"]
+
+        # figure out which issue on github this matches
+        valid_issues = [issue for issue in closed_issues if issue.title == name]
+
+        if len(valid_issues) != 1:
+            continue
+        valid_issue = valid_issues[0]
+
+        # ok this is a valid, closed issue on github.
+        valid_issue_keys.append(key)
+
+    for key in valid_issue_keys:
+        issue_style = f"class {key} done"
+
+        if issue_style not in mermaid_code:
+            mermaid_code = mermaid_code[0:-1] + [issue_style] + [mermaid_code[-1]]
 
     # write mermaid code to remote
     write_mermaid_graph_to_repo(
@@ -214,6 +249,8 @@ def get_mermaid_graph_from_repo(
 
     txt = None
     for issue in github_issues:
+        if issue.body is None:
+            continue
         if "```mermaid" in issue.body:
             txt = issue.body.split("\n")
             break
@@ -243,6 +280,8 @@ def write_mermaid_graph_to_repo(
     github_issues = r.get_issues(state="open")
 
     for issue in github_issues:
+        if issue.body is None:
+            continue
         if "```mermaid" in issue.body:
             issue.edit(body="\r\n".join(mermaid_code))
             return None
