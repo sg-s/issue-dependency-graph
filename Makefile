@@ -18,3 +18,8 @@ coverage-report: .coverage
 
 bump-version:
 	poetry run bump
+
+
+install:
+	poetry lock
+	poetry install
