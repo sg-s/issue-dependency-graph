@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 
 from beartype import beartype
-from beartype.typing import List
+from beartype.typing import List, Optional
 from github import Auth, Github
 
 local_token = None
@@ -13,6 +13,70 @@ try:
     with open(token_loc, "r") as file:
         local_token = file.read().strip()
 except Exception:
+    pass
+
+
+def set_milestone(
+    *,
+    repo: str,
+    token: str = local_token,
+    milestone: Optional[str] = None,
+):
+    """for a graph of issues in the README, set a milestone
+    for all those issues
+
+    If no milestone is provided, the first milestone will be used.
+    If milestone is provided, that must match the title of a valid,
+    open milestone on Github
+    """
+
+    g = Github(auth=Auth.Token(token))
+    r = g.get_repo(repo)
+
+    if milestone is None:
+        milestone = r.get_milestones()[0]
+    else:
+        for ml in r.get_milestones():
+            if ml.title == milestone:
+                milestone = ml
+                break
+        if isinstance(milestone, str):
+            raise Exception("milestone is a string, which means something went wrong")
+
+    contents = r.get_contents("README.md")
+    contents = contents.decoded_content.decode().split("\n")
+
+    # figure out what issues are referenced in the graph
+    mermaid_code = extract_mermaid_code(contents)
+    issues = extract_issues_from_mermaid_code(mermaid_code)
+    issues = [issue["name"] for issue in issues]
+
+    github_issues = r.get_issues()
+
+    for issue in github_issues:
+        if issue.title not in issues:
+            # this is not in the graph
+            continue
+        if issue.milestone is None:
+            issue.edit(milestone=milestone)
+
+
+def sync_graph_to_issues(*, repo: str, token: str = local_token):
+    """syncs mermaid graph to issues on github
+
+    this does the following:
+
+    - update the mermaid graph with links to those issues
+    - if issue is closed, marks the node as such
+
+    """
+
+    # get all issues from github
+
+    # get mermaid text
+
+    # get issues from mermaid text
+
     pass
 
 
@@ -55,6 +119,8 @@ def sync_issues_to_graph(*, repo: str, token: str = local_token):
             print(f"🚧 Creating issue with title {issue}")
             r.create_issue(title=issue)
 
+    return issues
+
 
 @beartype
 def extract_mermaid_code(txt: List[str]) -> List:
@@ -81,15 +147,38 @@ def extract_mermaid_code(txt: List[str]) -> List:
 
 @beartype
 def extract_issues_from_mermaid_code(txt: List[str]) -> List[dict]:
+    """returns a list of dicts for each issue referenced
+    in the mermaid code
+
+    each issue has the following keys:
+
+    - key
+    - name
+    - style
+    - link
+
+    """
     issues = []
 
+    # first make a list of all issues -- key and name
     for line in txt:
         if "(" in line and ")" in line:
             a = line.find("(")
-            key = line[0:a]
-            name = line[a + 1 : -1]
+            z = line.find(")")
+            key = line[0:a].strip()
+            name = line[a + 1 : z].strip()
 
             this_issue = dict(key=key, name=name)
             issues.append(this_issue)
+
+    # now figure out which ones have links
+    for line in txt:
+        if "click" in line and "href" in line:
+            print(line)
+            _, key, _, link, _ = line.strip().split(" ")
+
+            # figure out which issue this is in
+            idx = [idx for idx, issue in enumerate(issues) if issue["key"] == key][0]
+            issues[idx]["link"] = link
 
     return issues
