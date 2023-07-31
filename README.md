@@ -17,6 +17,12 @@ person working on a project.
 > be synced so you can see your progress.
 
 
+## What??
+
+See if in action right here. This repo is using this tool!
+
+[Click here](https://github.com/sg-s/issue-dependency-graph/issues/1)
+
 ## Installation
 
 (Assuming you have poetry installed)
