@@ -61,7 +61,11 @@ def set_milestone(
             issue.edit(milestone=milestone)
 
 
-def sync_graph_to_issues(*, repo: str, token: str = local_token):
+def sync_graph_to_issues(
+    *,
+    repo: str,
+    token: str = local_token,
+) -> None:
     """syncs mermaid graph to issues on github
 
     this does the following:
@@ -71,13 +75,47 @@ def sync_graph_to_issues(*, repo: str, token: str = local_token):
 
     """
 
-    # get all issues from github
+    g = Github(auth=Auth.Token(token))
+    r = g.get_repo(repo)
 
-    # get mermaid text
+    # get all issues from github
+    github_issues = r.get_issues()
+
+    # figure out what issues are referenced in the graph
+    mermaid_code = get_mermaid_graph_from_repo(repo=repo, token=token)
 
     # get issues from mermaid text
+    issues = extract_issues_from_mermaid_code(mermaid_code)
 
-    pass
+    # insert links for issues that don't have links
+    new_links = []
+    for issue in issues:
+        if "link" in issue.keys() and issue["link"] is not None:
+            continue
+
+        key = issue["key"]
+        name = issue["name"]
+
+        # figure out which issue on github this matches
+        valid_issues = [issue for issue in github_issues if issue.title == name]
+        if len(valid_issues) != 1:
+            continue
+
+        valid_issue = valid_issues[0]
+        this_link = valid_issue.html_url
+
+        new_link = f'click {key} href "{this_link}" _blank'
+        new_links.append(new_link)
+
+    # insert new links into mermaid diagram
+    mermaid_code = mermaid_code[0:-1] + new_links + [mermaid_code[-1]]
+
+    # write mermaid code to remote
+    write_mermaid_graph_to_repo(
+        mermaid_code=mermaid_code,
+        token=token,
+        repo=repo,
+    )
 
 
 @beartype
@@ -95,12 +133,9 @@ def sync_issues_to_graph(*, repo: str, token: str = local_token):
     # read README.md from repo URL
     g = Github(auth=Auth.Token(token))
     r = g.get_repo(repo)
-    contents = r.get_contents("README.md")
-
-    contents = contents.decoded_content.decode().split("\n")
 
     # figure out what issues are referenced in the graph
-    mermaid_code = extract_mermaid_code(contents)
+    mermaid_code = get_mermaid_graph_from_repo(repo=repo, token=token)
 
     issues = extract_issues_from_mermaid_code(mermaid_code)
     issues = [issue["name"] for issue in issues]
@@ -120,29 +155,6 @@ def sync_issues_to_graph(*, repo: str, token: str = local_token):
             r.create_issue(title=issue)
 
     return issues
-
-
-@beartype
-def extract_mermaid_code(txt: List[str]) -> List:
-    mermaid_code = []
-    in_mermaid = False
-
-    for line in txt:
-        if "```mermaid" in line:
-            in_mermaid = True
-            continue
-
-        if in_mermaid:
-            if "```" in line:
-                in_mermaid = False
-            else:
-                mermaid_code.append(line)
-
-    # clean it up a little. skip comments, new lines
-    mermaid_code = [line.replace("\n", "").strip() for line in mermaid_code]
-    mermaid_code = [line for line in mermaid_code if len(line) > 0]
-    mermaid_code = [line for line in mermaid_code if "%%" not in line]
-    return mermaid_code
 
 
 @beartype
@@ -174,7 +186,6 @@ def extract_issues_from_mermaid_code(txt: List[str]) -> List[dict]:
     # now figure out which ones have links
     for line in txt:
         if "click" in line and "href" in line:
-            print(line)
             _, key, _, link, _ = line.strip().split(" ")
 
             # figure out which issue this is in
@@ -182,3 +193,56 @@ def extract_issues_from_mermaid_code(txt: List[str]) -> List[dict]:
             issues[idx]["link"] = link
 
     return issues
+
+
+@beartype
+def get_mermaid_graph_from_repo(
+    *,
+    repo: str,
+    token: str = local_token,
+) -> List[str]:
+    """scans the repo's issues and figures out where
+    the mermaid graph describing issue deps is. It
+    assumes that this mermaid graph is in an issue
+    (typically pinned). It assumes that there is only
+    one mermaid graph in an issue, and that
+    only one open issue contains a mermaid graph"""
+
+    g = Github(auth=Auth.Token(token))
+    r = g.get_repo(repo)
+    github_issues = r.get_issues(state="open")
+
+    txt = None
+    for issue in github_issues:
+        if "```mermaid" in issue.body:
+            txt = issue.body.split("\n")
+            break
+
+    if txt is None:
+        raise Exception("Could not find a mermaid graph in open issues")
+
+    mermaid_code = [line.replace("\r", "") for line in txt]
+    mermaid_code = [line.replace("\n", "").strip() for line in mermaid_code]
+    mermaid_code = [line for line in mermaid_code if len(line) > 0]
+    mermaid_code = [line for line in mermaid_code if "%%" not in line]
+
+    return mermaid_code
+
+
+def write_mermaid_graph_to_repo(
+    *,
+    repo: str,
+    token: str = local_token,
+    mermaid_code: List[str],
+) -> None:
+    """writes a mermaid graph to a specific issue that contains
+    a mermaid graph"""
+
+    g = Github(auth=Auth.Token(token))
+    r = g.get_repo(repo)
+    github_issues = r.get_issues(state="open")
+
+    for issue in github_issues:
+        if "```mermaid" in issue.body:
+            issue.edit(body="\r\n".join(mermaid_code))
+            return None
