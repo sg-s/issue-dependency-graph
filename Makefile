@@ -1,4 +1,4 @@
-.PHONY: test coverage-report bump-version jupyter
+.PHONY: test coverage-report bump-version jupyter install-cli
 
 jupyter:
 	@echo "Installing kernel <issue_deps> in jupyter"
@@ -23,3 +23,9 @@ bump-version:
 install:
 	poetry lock
 	poetry install
+	
+
+install-cli:
+	echo "export PATH=\"${PWD}:\$$PATH\"" >> ~/.bash_profile
+
+

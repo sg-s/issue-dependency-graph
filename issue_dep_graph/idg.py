@@ -1,6 +1,8 @@
+#!/Users/srinivas/Library/Caches/pypoetry/virtualenvs/issue-dep-graph-7DK3Eg2J-py3.9/bin/python
 import os
 from pathlib import Path
 
+import arguably
 from beartype import beartype
 from beartype.typing import List, Optional
 from github import Auth, Github
@@ -53,7 +55,7 @@ def set_milestone(
     issues = extract_issues_from_mermaid_code(mermaid_code)
     issues = [issue["name"] for issue in issues]
 
-    github_issues = r.get_issues()
+    github_issues = r.get_issues(state="all")
 
     for issue in github_issues:
         if issue.title not in issues:
@@ -63,6 +65,32 @@ def set_milestone(
             issue.edit(milestone=milestone)
 
 
+@arguably.command
+@beartype
+def sync(
+    *,
+    repo: Optional[str] = None,
+    token: str = local_token,
+):
+    """Bidirectional sync between mermaid graph and issues"""
+
+    if repo is None:
+        raise Exception(
+            """
+===================================================
+|           Repository name is not set            |
+===================================================
+
+Use --repo <repo_name> to specify the repository
+
+            """
+        )
+
+    sync_graph_to_issues(repo=repo, token=token)
+    sync_issues_to_graph(repo=repo, token=token)
+
+
+@arguably.command
 def sync_graph_to_issues(
     *,
     repo: str,
@@ -81,7 +109,7 @@ def sync_graph_to_issues(
     r = g.get_repo(repo)
 
     # get all issues from github
-    github_issues = r.get_issues()
+    github_issues = r.get_issues(state="all")
 
     # figure out what issues are referenced in the graph
     mermaid_code = get_mermaid_graph_from_repo(repo=repo, token=token)
@@ -176,7 +204,7 @@ def sync_issues_to_graph(*, repo: str, token: str = local_token):
     issues = extract_issues_from_mermaid_code(mermaid_code)
     issues = [issue["name"] for issue in issues]
 
-    github_issues = r.get_issues()
+    github_issues = r.get_issues(state="all")
     github_issues = [issue.title for issue in github_issues]
 
     # figure out issues in the graph that are not
@@ -286,3 +314,11 @@ def write_mermaid_graph_to_repo(
         if "```mermaid" in issue.body:
             issue.edit(body="\r\n".join(mermaid_code))
             return None
+
+
+if __name__ == "__main__":
+    arguably.run()
+
+
+def start():
+    arguably.run()

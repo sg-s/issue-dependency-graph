@@ -31,11 +31,27 @@ See if in action right here. This repo is using this tool!
 git clone git@github.com:sg-s/issue-dependency-graph.git
 cd issue-dependency-graph
 make install
+
 ```
+
 
 ## Usage
 
-[coming soon]
+To use it from the CLI, run:
+
+```bash
+make install-cli
+```
+
+and restart your terminal. 
+
+Then, you should be able:
+
+```bash
+idg -h # prints a help command
+idg sync --repo "sg-s/issue-dependency-graph"
+```
+
 
 ## License
 
