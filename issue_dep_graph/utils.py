@@ -124,6 +124,7 @@ def sync_graph_to_issues(
 
     # mark closed issues as done
     closed_issues = r.get_issues(state="closed")
+
     valid_issue_keys = []
     for issue in issues:
         key = issue["key"]
