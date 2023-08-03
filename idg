@@ -1,4 +1,5 @@
 #!/bin/bash
 TOML_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 cd "$TOML_DIR" || exit
-poetry run bash -c "cd $TOML_DIR && poetry run idg $@"
+
+$(poetry env info -p)/bin/python issue_dep_graph/idg.py $@
