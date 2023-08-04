@@ -11,14 +11,12 @@ python = "^3.9"
 pygithub = "^1.59.0"
 beartype = "^0.15.0"
 arguably = "^1.2.5"
+poetry2setup = "^1.1.0"
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.20.1"
 debugpy = "1.6"
 
-
-[tool.poetry.scripts]
-idg = "issue_dep_graph.idg:start"
 
 
 [build-system]
