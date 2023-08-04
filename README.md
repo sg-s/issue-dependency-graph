@@ -1,3 +1,5 @@
+![](https://github.com/sg-s/issue-dependency-graph/actions/workflows/main.yml/badge.svg)
+
 # issue-dependency-graph
 
 ## 🧐 Problem Description 
