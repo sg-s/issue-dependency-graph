@@ -321,4 +321,7 @@ if __name__ == "__main__":
 
 
 def start():
+    """wrapper for arguably
+
+    this will be called by arguably."""
     arguably.run()
