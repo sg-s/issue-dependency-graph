@@ -1,4 +1,4 @@
-![](https://github.com/sg-s/issue-dependency-graph/actions/workflows/main.yml/badge.svg)
+![](https://github.com/sg-s/issue-dependency-graph/actions/workflows/main.yaml/badge.svg)
 
 # issue-dependency-graph
 
