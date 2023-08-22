@@ -1,4 +1,3 @@
-#!/Users/srinivas/Library/Caches/pypoetry/virtualenvs/issue-dep-graph-7DK3Eg2J-py3.9/bin/python
 import os
 from pathlib import Path
 
@@ -138,6 +137,7 @@ def sync_graph_to_issues(
 
         # figure out which issue on github this matches
         valid_issues = [issue for issue in github_issues if issue.title == name]
+
         if len(valid_issues) != 1:
             continue
 
@@ -317,11 +317,4 @@ def write_mermaid_graph_to_repo(
 
 
 if __name__ == "__main__":
-    arguably.run()
-
-
-def start():
-    """wrapper for arguably
-
-    this will be called by arguably."""
     arguably.run()
