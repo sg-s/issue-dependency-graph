@@ -104,6 +104,8 @@ def sync_graph_to_issues(
 
     """
 
+    print("🚧 Syncing graph to issues...")
+
     g = Github(auth=Auth.Token(token))
     r = g.get_repo(repo)
 
@@ -161,7 +163,7 @@ def sync_graph_to_issues(
         # figure out which issue on github this matches
         valid_issues = [issue for issue in closed_issues if issue.title == name]
 
-        if len(valid_issues) != 1:
+        if len(valid_issues) == 0:
             continue
         valid_issue = valid_issues[0]
 
@@ -193,6 +195,8 @@ def sync_issues_to_graph(*, repo: str, token: str = local_token):
     - creates issues on github for every item in the graph
 
     """
+
+    print("🚧 Syncing issues to graph...")
 
     # read README.md from repo URL
     g = Github(auth=Auth.Token(token))
