@@ -10,4 +10,3 @@ runs:
   image: 'Dockerfile'
   args:
     - ${{ inputs.repo }}
-    - ${{ secrets.GITHUB_TOKEN }}
