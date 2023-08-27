@@ -5,9 +5,10 @@ inputs:
   repo: 
     description: 'Repository to run on'
     required: true
-  token:  
-    description: 'Github token'
-    required: true
+  token:
+    description: 'The GitHub token'
+    required: false
+    default: ${{ github.token }}
 runs:
   using: 'docker'
   image: 'Dockerfile'
