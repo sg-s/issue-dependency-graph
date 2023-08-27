@@ -2,11 +2,15 @@
 name: 'Issue dependency graph'
 description: 'Make and sync a dep graph'
 inputs:
-  repo:  # id of input
+  repo: 
     description: 'Repository to run on'
+    required: true
+  token:  
+    description: 'Github token'
     required: true
 runs:
   using: 'docker'
   image: 'Dockerfile'
   args:
     - ${{ inputs.repo }}
+    - ${{ inputs.token }}
