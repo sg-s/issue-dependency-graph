@@ -1,16 +1,13 @@
 # action.yml
-name: 'Hello World'
-description: 'Greet someone and record the time'
+name: 'Issue dependency graph'
+description: 'Make and sync a dep graph'
 inputs:
-  who-to-greet:  # id of input
-    description: 'Who to greet'
+  repo:  # id of input
+    description: 'Repository to run on'
     required: true
-    default: 'World'
-outputs:
-  time: # id of output
-    description: 'The time we greeted you'
 runs:
   using: 'docker'
   image: 'Dockerfile'
   args:
-    - ${{ inputs.who-to-greet }}
+    - ${{ inputs.repo }}
+    - ${{ secrets.GITHUB_TOKEN }}

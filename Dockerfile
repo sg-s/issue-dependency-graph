@@ -6,9 +6,6 @@ COPY issue_dep_graph /issue_dep_graph
 
 COPY setup.py /setup.py
 
-RUN --mount=type=secret,id=github_token \
-  cat /run/secrets/github_token
-
 RUN pip install -e .
 
 
